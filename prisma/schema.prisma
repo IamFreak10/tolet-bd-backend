@@ -103,6 +103,10 @@ model House {
   areaSize      Int?     // in sqft
   amenities     String[] // e.g. ["Wifi", "Parking"]
   
+  // Advanced Map Scaling
+  latitude      Float?
+  longitude     Float?
+  
   ownerId       String?
   owner         User?    @relation("HouseOwner", fields: [ownerId], references: [id])
   
