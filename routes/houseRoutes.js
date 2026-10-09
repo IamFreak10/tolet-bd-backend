@@ -18,8 +18,12 @@ router.get('/', async (req, res) => {
 // Add a new house
 router.post('/', async (req, res) => {
     try {
+        const { ownerId, ...rest } = req.body;
         const newHouse = await prisma.house.create({
-            data: req.body
+            data: {
+                ...rest,
+                ...(ownerId && { owner: { connect: { id: ownerId } } })
+            }
         });
         res.status(201).json(newHouse);
     } catch (error) {
