@@ -9,7 +9,9 @@
     "dev": "nodemon server.js",
     "start:prod": "pm2 start ecosystem.config.cjs",
     "db:push": "prisma db push",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "build": "prisma generate && prisma db push",
+    "postinstall": "prisma generate && prisma db push"
   },
   "dependencies": {
     "@prisma/client": "^6.4.0",
