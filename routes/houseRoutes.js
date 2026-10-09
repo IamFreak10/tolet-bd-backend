@@ -27,4 +27,29 @@ router.post('/', async (req, res) => {
     }
 });
 
+// Update a house (Admin / Owner)
+router.put('/:id', async (req, res) => {
+    try {
+        const updatedHouse = await prisma.house.update({
+            where: { id: req.params.id },
+            data: req.body
+        });
+        res.json(updatedHouse);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
+// Delete a house (Admin / Owner)
+router.delete('/:id', async (req, res) => {
+    try {
+        await prisma.house.delete({
+            where: { id: req.params.id }
+        });
+        res.json({ message: "House deleted successfully" });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
 export default router;
