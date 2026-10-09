@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  TENANT
+  LANDLORD
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  COMPLETED
+}
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean
+  image         String?
+  createdAt     DateTime
+  updatedAt     DateTime
+  
+  // New User Profile Fields
+  role          Role      @default(TENANT)
+  phone         String?
+  bio           String?
+  rating        Float     @default(0.0)
+  
+  sessions      Session[]
+  accounts      Account[]
+  
+  // Relations
+  ownedHouses   House[]   @relation("HouseOwner")
+  bookings      Booking[]
+  reviews       Review[]  @relation("UserReviews")
+  givenReviews  Review[]  @relation("Reviewer")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime
+  updatedAt  DateTime
+}
+
+model House {
+  id            String   @id @default(cuid())
+  title         String
+  description   String
+  price         Float
+  location      String
+  bedrooms      Int
+  bathrooms     Int
+  imageUrl      String?
+  isAvailable   Boolean  @default(true)
+  
+  // Property details
+  type          String   @default("family")
+  floor         Int      @default(1)
+  areaSize      Int?     // in sqft
+  amenities     String[] // e.g. ["Wifi", "Parking"]
+  
+  ownerId       String?
+  owner         User?    @relation("HouseOwner", fields: [ownerId], references: [id])
+  
+  contactNumber String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  bookings      Booking[]
+  reviews       Review[]
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  startDate     DateTime
+  endDate       DateTime
+  totalAmount   Float
+  status        BookingStatus @default(PENDING)
+  
+  tenantId      String
+  tenant        User          @relation(fields: [tenantId], references: [id])
+  
+  houseId       String
+  house         House         @relation(fields: [houseId], references: [id])
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Review {
+  id            String   @id @default(cuid())
+  rating        Int
+  comment       String?
+  
+  reviewerId    String
+  reviewer      User     @relation("Reviewer", fields: [reviewerId], references: [id])
+  
+  houseId       String?
+  house         House?   @relation(fields: [houseId], references: [id])
+  
+  // A review can also be for a user (tenant or landlord)
+  targetUserId  String?
+  targetUser    User?    @relation("UserReviews", fields: [targetUserId], references: [id])
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
